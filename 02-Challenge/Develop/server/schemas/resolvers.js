@@ -1,4 +1,4 @@
-const {User, Book} = require('../models');
+const {User} = require('../models');
 const {AuthenticationError} = require('apolo-server-express');
 const {signToken} = require('../utils/auth');
 
@@ -6,7 +6,7 @@ const resolvers = {
     Query: {
         me: async (parent, args, context) => {
             if (context.user) {
-                const userData = await User.findOne ({})
+                const userData = await User.findOne ({_id: context.user_id})
                 .select('-__v -password');
                 return userData;
             }
@@ -31,11 +31,12 @@ const resolvers = {
             const token = signToken(user);
             return{token, user};
         },
-        saveBook: async (parent, {book}, context) => {
+        saveBook: async (parent, {bookData}, context) => {
             if(context.user){
                 const updatedUser = await User.findOneAndUpdate (
                     {_id: context.user._id},
-                    {$addToSet: {savedBooks: {bookId: bookId}}},
+                    {$addToSet: {savedBooks: {bookData}}},
+                    {new: true}
                 )
                 return updatedUser;
             }
@@ -45,7 +46,7 @@ const resolvers = {
             if (context.user) {
                 const updatedUser = await User.findOneAndUpdate(
                     {_id: context.user._id},
-                    {$pull: {savedBooks: {bookId: bookId}}},
+                    {$pull: {savedBooks: {bookId}}},
                     {new: true}
                 )
                 return updatedUser;
